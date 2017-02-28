@@ -102,7 +102,8 @@ namespace gse
 		template <typename T>
 		struct route
 		{
-			using node_type = std::function<void(const T &)>;
+			using value_type = T;
+			using node_type = std::function<void(const value_type &)>;
 			using node_list_type = typename std::vector<node_type>;
 
 			route() = default;
@@ -116,7 +117,7 @@ namespace gse
 			{
 				nodes.emplace_back(std::move(node));
 			}
-			void drive_sync(const T & elem)
+			void drive_sync(const value_type & elem)
 			{
 				for (auto & node : nodes)
 				{
@@ -167,21 +168,54 @@ namespace gse
 				subscribers[gcl::type_info::id<T>::value].insert(handler);
 			}
 			template <typename event_t>
-			void unscubscribe(const std::shared_ptr<handler> & handler)
+			void unsubscribe(const std::shared_ptr<handler> & handler)
 			{
 				subscribers.at(gcl::type_info::id<T>::value).erase(handler);
 			}
 
 			template <typename event_t>
-			void dispatch(const event_t & type)
+			void dispatch(const event_t & ev)
 			{
-				for (auto & subscriber : subscribers.at(gcl::type_info::id<T>::value))
-					subscriber.on_notify(type);
+				static_assert(std::is_base_of<event::type, event_t>::value, "event_t do not derive from type");
+				dispatch(gcl::type_info::id<T>::value, ev);
+			}
+			void dispath(const gcl::type_info::holder<gse::event::type> & holder)
+			{
+				dispath(holder.id, *(holder.value));
+			}
+			void dispath(gcl::type_info::id_type event_id, const event::type & ev)
+			{
+				for (auto & subscriber : subscribers.at(event_id))
+					subscriber->on(ev);
 			}
 
 		protected:
 			using handler_set_t = std::unordered_set<std::shared_ptr<handler>>;
 			std::unordered_map<gcl::type_info::id_type, handler_set_t> subscribers;
+		};
+
+		struct system
+		{
+			using event_holder_t = gcl::type_info::holder<event::type>;
+
+			template <typename event_t>
+			void process(const event_t & ev)
+			{
+				static_assert(std::is_base_of<event::type, event_t>::value, "event_t do not derive from type");
+				process(gcl::type_info::id<T>::value, ev);
+			}
+			void process(const gcl::type_info::holder<gse::event::type> & holder)
+			{
+				// todo
+			}
+			void process(gcl::type_info::id_type event_id, const event::type & ev)
+			{
+				process(event_holder_t(event_id, std::make_unique<event::type>(ev)));
+			}
+
+			using event_route_t = event::route<event_holder_t>;
+			event_route_t route;
+			event::dispatcher dispatcher;
 		};
 
 		namespace experimental
