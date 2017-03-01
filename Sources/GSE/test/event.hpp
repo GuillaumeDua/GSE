@@ -8,10 +8,12 @@ namespace test
 		{
 			struct A_event : gse::event::type
 			{
+				virtual ~A_event() override {}
 				int a_var = 42;
 			};
 			struct B_event : gse::event::type
 			{
+				~B_event() {}
 				int b_var = 13;
 			};
 

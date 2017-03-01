@@ -48,10 +48,16 @@ namespace gcl
 		template <typename interface_t>
 		struct holder final
 		{
+			using value_type = std::unique_ptr<interface_t>;
+
 			holder() = delete;
 			holder(holder &) = default;
 			holder(holder &&) = default;
 
+			holder(id_type _id, value_type && ptr)
+				: value(std::move(ptr))
+				, id(id)
+			{}
 			template <typename concret_t>
 			holder(std::unique_ptr<concret_t> && ptr)
 				: value(std::move(ptr))
@@ -68,8 +74,6 @@ namespace gcl
 				static_assert(!std::is_same<interface_t, concret_t>::value, "interface and concrete types are the same");
 				static_assert(std::is_base_of<interface_t, concret_t>::value, "interface_t is not base of concrete_t");
 			}
-
-			using value_type = std::unique_ptr<interface_t>;
 
 			const id_type id;
 			const value_type value;

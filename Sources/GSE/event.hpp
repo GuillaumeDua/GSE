@@ -18,7 +18,7 @@ namespace gse
 	{
 		struct type
 		{
-			virtual ~type() {}
+			virtual inline ~type() = 0 {};
 		};
 
 		struct handler
@@ -179,11 +179,11 @@ namespace gse
 				static_assert(std::is_base_of<event::type, event_t>::value, "event_t do not derive from type");
 				dispatch(gcl::type_info::id<T>::value, ev);
 			}
-			void dispath(const gcl::type_info::holder<gse::event::type> & holder)
+			void dispatch(const gcl::type_info::holder<gse::event::type> & holder)
 			{
-				dispath(holder.id, *(holder.value));
+				dispatch(holder.id, *(holder.value));
 			}
-			void dispath(gcl::type_info::id_type event_id, const event::type & ev)
+			void dispatch(gcl::type_info::id_type event_id, const event::type & ev)
 			{
 				for (auto & subscriber : subscribers.at(event_id))
 					subscriber->on(ev);
@@ -204,13 +204,18 @@ namespace gse
 				static_assert(std::is_base_of<event::type, event_t>::value, "event_t do not derive from type");
 				process(gcl::type_info::id<T>::value, ev);
 			}
-			void process(const gcl::type_info::holder<gse::event::type> & holder)
-			{
-				// todo
-			}
 			void process(gcl::type_info::id_type event_id, const event::type & ev)
 			{
-				process(event_holder_t(event_id, std::make_unique<event::type>(ev)));
+				using event_ptr_t = event::type*;
+				using event_unique_ptr_t = std::unique_ptr<event::type>;
+
+				event_ptr_t tmp = const_cast<event_ptr_t>(&ev);
+				process(event_holder_t(event_id, event_unique_ptr_t(std::move(tmp))));
+			}
+			void process(const gcl::type_info::holder<gse::event::type> & holder)
+			{
+				route.drive_sync(holder);
+				dispatcher.dispatch(holder);
 			}
 
 			using event_route_t = event::route<event_holder_t>;
