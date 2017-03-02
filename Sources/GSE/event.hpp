@@ -95,8 +95,6 @@ namespace gse
 
 			void on(gcl::type_info::id_type event_id, const type & ev) override
 			{
-				std::cout << "event_id = " << event_id << std::endl;
-
 				for (auto & elem : sockets)
 				{
 					std::cout << elem.first << std::endl;
@@ -203,6 +201,7 @@ namespace gse
 		struct dispatcher
 		{	// subject
 			using handler_t = handler;
+			using holder_event_t = gcl::type_info::holder<gse::event::type>;
 
 			template <typename event_t>
 			void subscribe(const std::shared_ptr<handler_t> & handler)
@@ -218,17 +217,21 @@ namespace gse
 			template <typename event_t>
 			void dispatch(const event_t & ev)
 			{
-				static_assert(std::is_base_of<event::type, event_t>::value, "event_t do not derive from type");
-				dispatch(gcl::type_info::id<event_t>::value, ev);
+				static_assert(std::is_base_of<event::type, event_t>::value, "event_t do not derive from event::type");
+
+				holder_event_t holder{ std::move(new event_t{ev}) };
+				for (auto & subscriber : subscribers.at(gcl::type_info::id<event_t>::value))
+					subscriber->on(holder);
 			}
-			void dispatch(const gcl::type_info::holder<gse::event::type> & holder)
+			void dispatch(const holder_event_t & holder)
 			{
-				dispatch(holder.id, *(holder.value));
+				for (auto & subscriber : subscribers.at(holder.id))
+					subscriber->on(holder);
 			}
 			void dispatch(gcl::type_info::id_type event_id, const event::type & ev)
 			{
 				for (auto & subscriber : subscribers.at(event_id))
-					subscriber->on(ev);
+					subscriber->on(event_id, ev);
 			}
 
 		protected:
