@@ -11,21 +11,26 @@
 #include <future>
 
 #include "gcl/type_info.hpp"
+#include "gcl/preprocessor.h"
 
 namespace gse
 {
-	namespace event
+	struct event_default_type
 	{
-		struct type
-		{
-			virtual inline ~type() = 0 {};
-		};
+		virtual inline ~event_default_type() = 0 {};
+	};
 
-		// todo : template
+	template <class event_interface_t = event_default_type>
+	struct event final
+	{
+		GCL_PREPROCESSOR__NOT_INSTANTIABLE(event);
+
+		using interface_t = event_interface_t;
+
 		struct handler
 		{
-			using typeinfo_holder_t = gcl::type_info::holder<type>;
-			using event_callback_t = std::function<void(const type &)>;
+			using typeinfo_holder_t = gcl::type_info::holder<interface_t>;
+			using event_callback_t = std::function<void(const interface_t &)>;
 
 			handler() = default;
 			handler(handler &&) = delete;
@@ -35,14 +40,14 @@ namespace gse
 			template <typename event_t>
 			void on(const event_t & ev)
 			{
-				static_assert(std::is_base_of<type, event_t>::value, "event_t do not derive from type");
+				static_assert(std::is_base_of<interface_t, event_t>::value, "event_t does not derive from interface_t");
 				this->on(gcl::type_info::id<event_t>::value, ev);
 			}
 			void on(const typeinfo_holder_t & holder)
 			{
 				this->on(holder.id, *(holder.value));
 			}
-			virtual void on(gcl::type_info::id_type event_id, const type & ev) = 0;
+			virtual void on(gcl::type_info::id_type event_id, const interface_t & ev) = 0;
 
 		//protected:
 			template <typename event_t>
@@ -66,7 +71,7 @@ namespace gse
 				: socket(socket)
 			{}
 
-			void on(gcl::type_info::id_type event_id, const type & ev) override
+			void on(gcl::type_info::id_type event_id, const interface_t & ev) override
 			{
 				if (event_id != socket.first)
 					throw std::domain_error("one_to_one_handler::on : bad event_id");
@@ -90,14 +95,14 @@ namespace gse
 			one_to_many_handler(gcl::type_info::id_type event_id, event_callback_t && cb)
 				: socket(event_id, { std::forward<event_callback_t>(cb) })
 			{}
-			one_to_many_handler(gcl::type_info::id_type event_id, socket_container_t::second_type && cbs)
+			one_to_many_handler(gcl::type_info::id_type event_id, typename socket_container_t::second_type && cbs)
 				: socket(event_id, std::forward<socket_container_t::second_type>(cbs) )
 			{}
 			one_to_many_handler(socket_container_t && socket)
 				: socket(socket)
 			{}
 
-			void on(gcl::type_info::id_type event_id, const type & ev) override
+			void on(gcl::type_info::id_type event_id, const interface_t & ev) override
 			{
 				if (event_id != socket.first)
 					throw std::domain_error("one_to_one_handler::on : bad event_id");
@@ -123,11 +128,11 @@ namespace gse
 			using socket_container_t = std::unordered_map<gcl::type_info::id_type, event_callback_t>;
 
 			many_to_one_handler() = default;
-			many_to_one_handler(std::initializer_list<socket_container_t::value_type> && il)
+			many_to_one_handler(std::initializer_list<typename socket_container_t::value_type> && il)
 				: sockets{ il }
 			{}
 
-			void on(gcl::type_info::id_type event_id, const type & ev) override
+			void on(gcl::type_info::id_type event_id, const interface_t & ev) override
 			{
 				for (auto & elem : sockets)
 				{
@@ -150,11 +155,11 @@ namespace gse
 			using socket_container_t = std::unordered_multimap<gcl::type_info::id_type, event_callback_t>;
 
 			many_to_many_handler() = default;
-			many_to_many_handler(std::initializer_list<socket_container_t::value_type> && il)
+			many_to_many_handler(std::initializer_list<typename socket_container_t::value_type> && il)
 				: sockets{ il }
 			{}
 
-			void on(gcl::type_info::id_type event_id, const type & ev) override
+			void on(gcl::type_info::id_type event_id, const interface_t & ev) override
 			{
 				auto range = sockets.equal_range(event_id);
 				for (auto it = range.first; it != range.second; ++it)
@@ -263,11 +268,10 @@ namespace gse
 			node_list_type	nodes;
 		};
 
-		// todo : template
 		struct dispatcher
 		{	// subject
 			using handler_t = handler;
-			using holder_event_t = gcl::type_info::holder<gse::event::type>;
+			using holder_event_t = gcl::type_info::holder<interface_t>;
 
 			template <typename event_t>
 			void subscribe(const std::shared_ptr<handler_t> & handler)
@@ -283,7 +287,7 @@ namespace gse
 			template <typename event_t>
 			void dispatch(const event_t & ev)
 			{
-				static_assert(std::is_base_of<event::type, event_t>::value, "event_t do not derive from event::type");
+				static_assert(std::is_base_of<event::interface_t, event_t>::value, "event_t does not derive from event::interface_t");
 
 				holder_event_t holder{ std::move(new event_t{ev}) };
 				for (auto & subscriber : subscribers.at(gcl::type_info::id<event_t>::value))
@@ -294,7 +298,7 @@ namespace gse
 				for (auto & subscriber : subscribers.at(holder.id))
 					subscriber->on(holder);
 			}
-			void dispatch(gcl::type_info::id_type event_id, const event::type & ev)
+			void dispatch(gcl::type_info::id_type event_id, const interface_t & ev)
 			{
 				for (auto & subscriber : subscribers.at(event_id))
 					subscriber->on(event_id, ev);
@@ -307,34 +311,34 @@ namespace gse
 
 		struct system
 		{
-			using event_holder_t = gcl::type_info::holder<event::type>;
+			using event_holder_t = gcl::type_info::holder<interface_t>;
 
 			template <typename event_t>
 			void process(const event_t & ev)
 			{
-				static_assert(std::is_base_of<event::type, event_t>::value, "event_t do not derive from type");
+				static_assert(std::is_base_of<event::interface_t, event_t>::value, "event_t do not derive from interface_t");
 				process(gcl::type_info::id<T>::value, ev);
 			}
-			void process(gcl::type_info::id_type event_id, const event::type & ev)
+			void process(gcl::type_info::id_type event_id, const interface_t & ev)
 			{
-				using event_ptr_t = event::type*;
-				using event_unique_ptr_t = std::unique_ptr<event::type>;
+				using event_ptr_t = event::interface_t*;
+				using event_unique_ptr_t = std::unique_ptr<event::interface_t>;
 
 				event_ptr_t tmp = const_cast<event_ptr_t>(&ev);
 				process(event_holder_t(event_id, event_unique_ptr_t(std::move(tmp))));
 			}
-			void process(const gcl::type_info::holder<gse::event::type> & holder)
+			void process(const gcl::type_info::holder<interface_t> & holder)
 			{
 				route.drive_sync(holder);
 				dispatcher.dispatch(holder);
 			}
 
-			using event_route_t = event::route<event_holder_t>;
+			using event_route_t = route<event_holder_t>;
 			event_route_t route;
-			event::dispatcher dispatcher;
+			dispatcher dispatcher;
 		};
 
-		namespace experimental
+		struct experimental final
 		{
 			template <typename ... t_events>
 			struct static_socket
@@ -381,8 +385,8 @@ namespace gse
 
 				std::array<socket_type, sizeof...(t_events)> sockets;
 			};
-		}
-	}
+		};
+	};
 }
 
 #endif // GGE_EVENTS__
