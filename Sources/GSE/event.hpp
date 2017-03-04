@@ -53,24 +53,23 @@ namespace gse
 			virtual void add_listener(gcl::type_info::id_type event_id, event_callback_t && callback) = 0;
 		};
 
-		// 1 -> 1
-		struct unique_handler : handler
+		struct one_to_one_handler : handler
 		{
 			using event_callback_t = handler::event_callback_t;
 			using socket_container_t = std::pair<gcl::type_info::id_type, event_callback_t>;
 
-			unique_handler() = default;
-			unique_handler(gcl::type_info::id_type event_id, event_callback_t && cb)
+			one_to_one_handler() = default;
+			one_to_one_handler(gcl::type_info::id_type event_id, event_callback_t && cb)
 				: socket(event_id, std::forward<event_callback_t>(cb))
 			{}
-			unique_handler(socket_container_t && socket)
+			one_to_one_handler(socket_container_t && socket)
 				: socket(socket)
 			{}
 
 			void on(gcl::type_info::id_type event_id, const type & ev) override
 			{
 				if (event_id != socket.first)
-					throw std::domain_error("unique_handler::on : bad event_id");
+					throw std::domain_error("one_to_one_handler::on : bad event_id");
 				socket.second(ev);
 			}
 			void add_listener(gcl::type_info::id_type event_id, event_callback_t && callback) override
@@ -82,14 +81,49 @@ namespace gse
 		protected:
 			socket_container_t socket;
 		};
-		// N -> 1
-		struct single_handler : handler
+		struct one_to_many_handler : handler
+		{
+			using event_callback_t = handler::event_callback_t;
+			using socket_container_t = std::pair<gcl::type_info::id_type, std::vector<event_callback_t>>;
+
+			one_to_many_handler() = default;
+			one_to_many_handler(gcl::type_info::id_type event_id, event_callback_t && cb)
+				: socket(event_id, { std::forward<event_callback_t>(cb) })
+			{}
+			one_to_many_handler(gcl::type_info::id_type event_id, socket_container_t::second_type && cbs)
+				: socket(event_id, std::forward<socket_container_t::second_type>(cbs) )
+			{}
+			one_to_many_handler(socket_container_t && socket)
+				: socket(socket)
+			{}
+
+			void on(gcl::type_info::id_type event_id, const type & ev) override
+			{
+				if (event_id != socket.first)
+					throw std::domain_error("one_to_one_handler::on : bad event_id");
+				for (auto & cb : socket.second)
+					cb(ev);
+			}
+			void add_listener(gcl::type_info::id_type event_id, event_callback_t && callback) override
+			{
+				if (socket.first != event_id)
+				{
+					socket.second.clear();
+					socket.first = event_id;
+				}
+				socket.second.push_back(std::move(callback));
+			}
+
+		protected:
+			socket_container_t socket;
+		};
+		struct many_to_one_handler : handler
 		{
 			using event_callback_t = handler::event_callback_t;
 			using socket_container_t = std::unordered_map<gcl::type_info::id_type, event_callback_t>;
 
-			single_handler() = default;
-			single_handler(std::initializer_list<socket_container_t::value_type> && il)
+			many_to_one_handler() = default;
+			many_to_one_handler(std::initializer_list<socket_container_t::value_type> && il)
 				: sockets{ il }
 			{}
 
@@ -110,14 +144,13 @@ namespace gse
 		protected:
 			socket_container_t sockets;
 		};
-		// N -> N
-		struct multi_handler : handler
+		struct many_to_many_handler : handler
 		{
 			using event_callback_t = handler::event_callback_t;
 			using socket_container_t = std::unordered_multimap<gcl::type_info::id_type, event_callback_t>;
 
-			multi_handler() = default;
-			multi_handler(std::initializer_list<socket_container_t::value_type> && il)
+			many_to_many_handler() = default;
+			many_to_many_handler(std::initializer_list<socket_container_t::value_type> && il)
 				: sockets{ il }
 			{}
 
@@ -134,6 +167,39 @@ namespace gse
 
 		protected:
 			socket_container_t sockets;
+		};
+
+		struct select_handler final
+		{
+			enum relation_val_t
+			{
+				one,
+				many
+			};
+
+			template <relation_val_t first_val, relation_val_t second_val>
+			struct get;
+
+			template <>
+			struct get<one, one>
+			{
+				using handler_t = one_to_one_handler;
+			};
+			template <>
+			struct get<one, many>
+			{
+				using handler_t = one_to_many_handler;
+			};
+			template <>
+			struct get<many, one>
+			{
+				using handler_t = many_to_one_handler;
+			};
+			template <>
+			struct get<many, many>
+			{
+				using handler_t = many_to_many_handler;
+			};
 		};
 
 		template <typename T>
