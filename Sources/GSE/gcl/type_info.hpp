@@ -58,6 +58,7 @@ namespace gcl
 				: value(std::move(ptr))
 				, id(id)
 			{}
+
 			template <typename concret_t>
 			holder(std::unique_ptr<concret_t> && ptr)
 				: value(std::move(ptr))
