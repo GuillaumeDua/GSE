@@ -13,7 +13,7 @@
 #include "gcl/type_info.hpp"
 #include "gcl/preprocessor.h"
 
-namespace gse
+namespace gcl
 {
 	struct event_default_type
 	{
