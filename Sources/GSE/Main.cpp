@@ -1,6 +1,5 @@
 #include "gcl/test/event.hpp"
 
-
 int	main(int ac, char *av[])
 {
 	gcl::test::event::proceed();

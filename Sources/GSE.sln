@@ -7,13 +7,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GSE", "GSE\GSE.vcxproj", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gcl", "gcl", "{D852AAA3-08F1-4713-9A37-8B66C10C7360}"
 	ProjectSection(SolutionItems) = preProject
+		GSE\gcl\event.hpp = GSE\gcl\event.hpp
+		GSE\gcl\preprocessor.h = GSE\gcl\preprocessor.h
 		GSE\gcl\thread_safe.hpp = GSE\gcl\thread_safe.hpp
 		GSE\gcl\type_info.hpp = GSE\gcl\type_info.hpp
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D326B9E9-8209-4C8D-9E26-84D7015E27DC}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{C6284DE2-8A41-4AC8-A0E2-9D321968CB2D}"
 	ProjectSection(SolutionItems) = preProject
-		GSE\test\event.hpp = GSE\test\event.hpp
+		GSE\gcl\test\event.hpp = GSE\gcl\test\event.hpp
 	EndProjectSection
 EndProject
 Global
@@ -35,5 +37,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C6284DE2-8A41-4AC8-A0E2-9D321968CB2D} = {D852AAA3-08F1-4713-9A37-8B66C10C7360}
 	EndGlobalSection
 EndGlobal
