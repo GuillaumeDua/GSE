@@ -61,7 +61,7 @@ namespace gcl
 
 			template <typename concret_t>
 			holder(std::unique_ptr<concret_t> && ptr)
-				: value(std::move(ptr))
+				: value(std::forward<std::unique_ptr<concret_t>>(ptr))
 				, id(type_info::id<concret_t>::value)
 			{
 				static_assert(!std::is_same<interface_t, concret_t>::value, "interface and concrete types are the same");
