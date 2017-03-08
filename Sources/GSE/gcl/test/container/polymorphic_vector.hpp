@@ -18,6 +18,7 @@ namespace gcl
 					{
 						virtual ~A() {}
 						virtual void do_stuff() = 0;
+						bool to_garbage = true;
 					};
 					struct B : A
 					{
@@ -37,6 +38,7 @@ namespace gcl
 					};
 
 					gcl::container::polymorphic_vector<A> container;
+					using container_elem_t = gcl::container::polymorphic_vector<A>::element_t;
 
 					container.emplace_back<B>(1);
 					container.emplace_back<C>("one");
@@ -48,21 +50,27 @@ namespace gcl
 					// B = B._i +1
 					container.visit<B>([](A & elem)
 					{
-						reinterpret_cast<B*>(&elem)->_i += 1;
+						dynamic_cast<B*>(&elem)->_i += 1;
 					});
 					// C = C._str + 'X'
 					container.visit<C>([](A & elem)
 					{
-						reinterpret_cast<C*>(&elem)->_str += 'X';
+						dynamic_cast<C*>(&elem)->_str += 'X';
+						elem.to_garbage = true;
 					});
 
-					B * b_ptr = reinterpret_cast<B*>(container.get<B>().front());
+					B * b_ptr = dynamic_cast<B*>(container.get<B>().front());
 					assert(b_ptr);
 					assert(b_ptr->_i == 2);
 
-					C * c_ptr = reinterpret_cast<C*>(container.get<C>().front());
+					C * c_ptr = dynamic_cast<C*>(container.get<C>().front());
 					assert(c_ptr);
 					assert(c_ptr->_str.back() == 'X');
+
+					container.remove_if([](const auto & elem) { return elem->to_garbage; });
+					assert(container.get().size() == 0);
+					assert(container.get<B>().size() == 0);
+					assert(container.get<C>().size() == 0);
 				}
 			}
 		}

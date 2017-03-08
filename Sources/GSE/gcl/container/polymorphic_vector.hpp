@@ -70,6 +70,7 @@ namespace gcl
 			template <typename T>
 			void visit(std::function<void(const interface_t &)> func) const
 			{
+				static_assert(std::is_base_of<value_type, T>::value, "T does not derive from value_type");
 				for (auto & elem : content_sorted_accessor.at(gcl::type_info::id<T>::value))
 				{
 					func(*elem);
@@ -78,6 +79,7 @@ namespace gcl
 			template <typename T>
 			void visit(std::function<void(interface_t &)> func)
 			{
+				static_assert(std::is_base_of<value_type, T>::value, "T does not derive from value_type");
 				for (auto & elem : content_sorted_accessor.at(gcl::type_info::id<T>::value))
 				{
 					func(*elem);
@@ -98,24 +100,25 @@ namespace gcl
 				}
 			}
 
-			void remove_if(std::function<void(const interface_t &)> func)
+			template <class Fun> // same synthax, as unique_ptr-s overload operator->
+			void remove_if(Fun func)
 			{
 				for (auto & content_accessor : content_sorted_accessor)
 				{
-					content_accessor.erase
+					content_accessor.second.erase
 					(
-						std::remove_if(std::begin(content_accessor.second), std::end(content_accessor.second)),
-						func,
+						std::remove_if(std::begin(content_accessor.second), std::end(content_accessor.second), func),
 						std::end(content_accessor.second)
 					);
 				}
 				content.erase
 				(
-					std::remove_if(std::begin(content.second), std::end(content.second)),
-					[](const auto & unique_ptr) { func(*unique_ptr); },
-					std::end(content.second)
+					std::remove_if(std::begin(content), std::end(content), func),
+					std::end(content)
 				);
 			}
+			/*template <class T, class Fun>
+			void remove_if(Fun func); // cost too much */
 
 		protected:
 			using content_t = std::vector<element_t>;
