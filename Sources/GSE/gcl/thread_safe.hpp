@@ -29,6 +29,11 @@ namespace gcl
 				}
 				return std::move(elem);
 			}
+			inline std::size_t size() const
+			{
+				std::unique_lock<std::mutex> lock(cache_mutex);
+				return cache.size();
+			}
 
 		private:
 			std::queue<std::unique_ptr<event>> cache;

@@ -42,7 +42,7 @@ namespace gcl
 		template <typename T>
 		struct id
 		{
-			static const id_type value;
+			static const id_type value; // [todo]::[C++14] : MS compiler do not support variable-template
 		};
 
 		template <typename interface_t>
@@ -81,12 +81,10 @@ namespace gcl
 		};
 	}
 
-#pragma warning (disable : 4311)
-#pragma warning (disable : 4302)
+#pragma warning (disable : 4311 4302)
 	template <typename T>
 	const type_info::id_type type_info::id<T>::value = reinterpret_cast<type_info::id_type>(&(type_info::id<T>::value));
-#pragma warning (default : 4311)
-#pragma warning (default : 4302)
+#pragma warning (default : 4311 4302)
 }
 
 #endif // GCL_TUPLE_INFO__
