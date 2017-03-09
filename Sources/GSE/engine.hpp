@@ -11,45 +11,64 @@
 # include <algorithm>
 # include <vector>
 # include <future>
+# include <map>
 
 namespace gse
 {
-	// todo : use (sorted?) std::vector for more powerful range operations
-
-	struct entity_container
+	template
+	<
+		class ext_lib_wrapper_t = gse::ext_lib_wrapper::SFML
+	>
+	struct window
 	{
-		using container_t = std::set<std::unique_ptr<entity>>;	// less efficient for insert/delete, more for range op than unordered_set
+		using draw_t = typename ext_lib_wrapper_t::draw;
 
-		entity_container() = default;
-		entity_container(const entity_container &) = delete;
-		entity_container(entity_container &&) = default;
-		entity_container(std::initializer_list<std::unique_ptr<entity>> && entities_val)
-			: content(entities_val)
-		{}
-
-		using visitor_t = std::function<void(std::unique_ptr<entity> &)>;
-		void visit(visitor_t visitor)
+		window(std::pair<unsigned, unsigned> && dimension,
+			const std::string & name, const std::string & background_path)
+			: render_window(sf::VideoMode(dimension.first, dimension.second, 32), name)
 		{
-			std::for_each(std::begin(content), std::end(content), visitor);
-			// todo : split by range-chunks into threads
+			if (is_valid = background_texture.loadFromFile(background_path))
+				background.setTexture(background_texture);
+			render_window.draw(background);
 		}
 
-		void add(container_t::value_type && entity_value)
+		inline operator bool() const
 		{
-			content.insert(std::forward<container_t::value_type>(entity_value));
+			return is_valid;
 		}
-		void remove(container_t::value_type const & entity_value)
+
+		void clear()
 		{
-			content.erase(entity_value);
+			render_window.clear();
+			render_window.draw(background);
+		}
+		void display()
+		{
+			render_window.display();
+		}
+
+		inline operator typename draw_t::window_t &()
+		{
+			return render_window;
+		}
+		inline typename draw_t::window_t & get()
+		{
+			return render_window;
 		}
 
 	protected:
+		typename draw_t::render_window_t	render_window;
+		typename draw_t::texture_t			background_texture;
+		typename draw_t::sprite_t			background;
 
-		container_t content;
+		bool is_valid = false;
 	};
 
+	template <class ext_lib_wrapper_t = gse::ext_lib_wrapper::SFML>
 	struct core
 	{
+		using draw_t = typename ext_lib_wrapper_t::draw;
+		using window_t = window<ext_lib_wrapper_t>;
 
 		void	run()
 		{
@@ -71,7 +90,7 @@ namespace gse
 		{
 			// entities behave here
 		}
-		void draw()
+		void draw(typename draw_t::window_t & window)
 		{
 			// background.draw()
 			// entities drawn here
@@ -80,9 +99,8 @@ namespace gse
 		std::function<bool()>	endCondition = []() { return false; };
 		std::atomic_bool		is_running = false;
 
-		gse::input::handler		input_handler = gse::input::debug_handler_value::sockets;	// input
-		entity_container		entities;													// update
-		ext_lib_wrapper::SFML::draw::sprite_t background;									// draw
+		input::handler			input_handler = gse::input::debug_handler_value::sockets;	// input
+		entity_manager			entities;													// update
 	};
 }
 

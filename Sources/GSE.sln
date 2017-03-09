@@ -16,6 +16,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{C6284DE2-8A41-4AC8-A0E2-9D321968CB2D}"
 	ProjectSection(SolutionItems) = preProject
 		GSE\gcl\test\event.hpp = GSE\gcl\test\event.hpp
+		GSE\gcl\test\container\polymorphic_vector.hpp = GSE\gcl\test\container\polymorphic_vector.hpp
+		GSE\gcl\test\test.hpp = GSE\gcl\test\test.hpp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "container", "container", "{B8B735DC-E708-4C3E-A00F-539A12580353}"
+	ProjectSection(SolutionItems) = preProject
+		GSE\gcl\container\polymorphic_vector.hpp = GSE\gcl\container\polymorphic_vector.hpp
 	EndProjectSection
 EndProject
 Global
@@ -40,5 +47,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C6284DE2-8A41-4AC8-A0E2-9D321968CB2D} = {D852AAA3-08F1-4713-9A37-8B66C10C7360}
+		{B8B735DC-E708-4C3E-A00F-539A12580353} = {D852AAA3-08F1-4713-9A37-8B66C10C7360}
 	EndGlobalSection
 EndGlobal

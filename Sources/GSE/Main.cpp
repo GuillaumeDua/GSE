@@ -1,10 +1,11 @@
-#include "gcl/test/event.hpp"
-#include "gcl/test/container/polymorphic_vector.hpp"
+#include "test/engine.hpp"
+#include "gcl/test/test.hpp"
 
 int	main(int ac, char *av[])
 {
-	gcl::test::event::proceed();
-	gcl::test::container::polymorphic_vector::proceed();
+	gcl::test::proceed();
+	
+	gse::test::engine::proceed();
 
 	system("pause");
 	return 0;

@@ -1,10 +1,11 @@
 #ifndef GCL_CONTAINER__POLYMORPHIC_VECTOR_HPP__
 # define GCL_CONTAINER__POLYMORPHIC_VECTOR_HPP__
 
+#include "../type_info.hpp"
+
 #include <unordered_map>
 #include <vector>
-
-#include "../type_info.hpp"
+#include <functional>
 
 namespace gcl
 {
