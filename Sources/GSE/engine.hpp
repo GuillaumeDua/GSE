@@ -69,6 +69,12 @@ namespace gse
 	{
 		using draw_t = typename ext_lib_wrapper_t::draw;
 		using window_t = window<ext_lib_wrapper_t>;
+		using input_t = typename gse::input<ext_lib_wrapper_t>;
+
+		core(window_t && w, input_t && input)
+			: window(w)
+			, input_handler(std::forward<input_t>(input))
+		{}
 
 		void	run()
 		{
@@ -84,7 +90,7 @@ namespace gse
 		void input()
 		{
 			// get inputs
-			// handle inputs
+			// |- handle inputs
 		}
 		void update()
 		{
@@ -92,15 +98,16 @@ namespace gse
 		}
 		void draw(typename draw_t::window_t & window)
 		{
-			// background.draw()
-			// entities drawn here
+			// entities drawn to window here
+			window.display();
 		}
 
 		std::function<bool()>	endCondition = []() { return false; };
 		std::atomic_bool		is_running = false;
 
-		input::handler			input_handler = gse::input::debug_handler_value::sockets;	// input
-		entity_manager			entities;													// update
+		input_t					input_handler;	// input
+		entity_manager			entities;		// update
+		window_t				window;			// draw
 	};
 }
 

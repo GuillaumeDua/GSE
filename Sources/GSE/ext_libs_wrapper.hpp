@@ -15,6 +15,7 @@ namespace gse
 			struct input
 			{
 				using event_t = sf::Event;
+				using event_id_t = sf::Event::EventType;
 			};
 			struct draw
 			{

@@ -1,6 +1,7 @@
 #include "input.hpp"
 
-std::shared_ptr<gse::input::handler::container_t>	gse::input::debug_handler_value::sockets = std::make_shared<gse::input::handler::container_t>(gse::input::handler::container_t
+template <class ext_lib_wrapper_t>
+std::shared_ptr<typename gse::input<ext_lib_wrapper_t>::handler::container_t>	gse::input<ext_lib_wrapper_t>::debug_handler_value::sockets = std::make_shared<gse::input<ext_lib_wrapper_t>::handler::container_t>(gse::input<ext_lib_wrapper_t>::handler::container_t
 {
 	{
 		sf::Event::Closed,
