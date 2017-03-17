@@ -4,6 +4,11 @@
 #include "../engine.hpp"
 #include <cassert>
 
+#include <future>
+#include <chrono>
+
+using namespace std::chrono_literals;
+
 namespace gse
 {
 	namespace test
@@ -12,18 +17,26 @@ namespace gse
 		{
 			void test1_window()
 			{
-				gse::window<> window
-				{ 
+				using gse_types = gse::types<gse::ext_lib_wrapper::SFML>;
+
+				auto window = ::std::make_unique<gse_types::window_t>
+				(
 					std::make_pair(800, 600),
 					"test window",
 					"../../image/fedora_verne.png"
-				};
-				assert(window);
+				);
+				assert(*window);
 
-				while (true)
+				gse_types::input_handler_t	input{ {} };
+				gse_types::engine_t			engine{ std::move(window), std::move(input) };
+
+
+				std::future<void> stopper = std::async(std::launch::async, [&engine]()
 				{
-					window.display();
-				}
+					std::this_thread::sleep_for(2s);
+					engine.stop();
+				}); // not get
+				engine.run();
 			}
 
 			void proceed()
