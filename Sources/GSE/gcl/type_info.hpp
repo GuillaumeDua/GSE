@@ -64,20 +64,26 @@ namespace gcl
 				: value(std::forward<std::unique_ptr<concret_t>>(ptr))
 				, id(type_info::id<concret_t>::value)
 			{
-				static_assert(!std::is_same<interface_t, concret_t>::value, "interface and concrete types are the same");
-				static_assert(std::is_base_of<interface_t, concret_t>::value, "interface_t is not base of concrete_t");
+				check_<concret_t>();
 			}
 			template <typename concret_t>
 			holder(concret_t * ptr)
 				: value(std::move(ptr))
 				, id(type_info::id<concret_t>::value)
 			{
-				static_assert(!std::is_same<interface_t, concret_t>::value, "interface and concrete types are the same");
-				static_assert(std::is_base_of<interface_t, concret_t>::value, "interface_t is not base of concrete_t");
+				check_<concret_t>();
 			}
 
 			const id_type id;
 			const value_type value;
+
+		private :
+			template <typename concret_t>
+			static constexpr void check_()
+			{
+				static_assert(!std::is_same<interface_t, concret_t>::value, "interface and concrete types are the same");
+				static_assert(std::is_base_of<interface_t, concret_t>::value, "interface_t is not base of concrete_t");
+			}
 		};
 	}
 
