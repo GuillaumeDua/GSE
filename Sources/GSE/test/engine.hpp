@@ -30,13 +30,12 @@ namespace gse
 				gse_types::input_handler_t	input{ {} };
 				gse_types::engine_t			engine{ std::move(window), std::move(input) };
 
-
 				std::future<void> stopper = std::async(std::launch::async, [&engine]()
 				{
 					std::this_thread::sleep_for(2s);
 					engine.stop();
 				}); // not get
-				engine.run();
+				engine.run(); // main thread, as UI restriction
 			}
 
 			void proceed()
