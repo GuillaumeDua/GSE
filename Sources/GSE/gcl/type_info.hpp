@@ -3,6 +3,12 @@
 
 #include <tuple>
 #include <memory>
+#include <functional>
+#include <cassert>
+
+#include "preprocessor.h"
+
+#include <iostream> // todo::remove
 
 namespace gcl
 {
@@ -13,7 +19,7 @@ namespace gcl
 		template <typename ... Ts>
 		struct tuple
 		{
-			tuple() = delete;
+			GCL_PREPROCESSOR__NOT_INSTANTIABLE(tuple)
 
 			using _Types = std::tuple<Ts...>;
 
@@ -85,6 +91,56 @@ namespace gcl
 				static_assert(std::is_base_of<interface_t, concret_t>::value, "interface_t is not base of concrete_t");
 			}
 		};
+
+		namespace experimental
+		{
+			struct any
+			{
+				any(const any &) = delete;
+				any(const any &&) = delete;
+				virtual inline ~any() = 0 {}
+
+				virtual inline const type_info::id_type id() const = 0;
+
+				inline bool operator==(const any & other)
+				{
+					return other.id() == id() && compare_impl(other);
+				}
+			protected:
+				virtual inline const bool compare_impl(const any &) const = 0;
+
+				any() = default;
+			};
+
+			template <typename T>
+			struct any_impl : public any, public T
+			{
+				friend any;
+				using type_t = any_impl<T>;
+
+				template <typename ... Args>
+				any_impl(Args... args)
+					: any()
+					, T(std::forward<std::decay<Args...>::type>(args...))
+				{}
+				~any_impl() override {}
+
+				operator T()
+				{
+					return static_cast<T&>(*this);
+				}
+
+				inline const type_info::id_type id() const
+				{
+					return gcl::type_info::id<T>::value;
+				}
+				inline const bool compare_impl(const any & other) const
+				{
+					assert(id() == other.id());
+					return (dynamic_cast<const T &>(dynamic_cast<const type_t &>(other)) == dynamic_cast<const T&>(*this));
+				}
+			};
+		}
 	}
 
 #pragma warning (disable : 4311 4302)

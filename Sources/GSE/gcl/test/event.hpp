@@ -5,7 +5,7 @@ namespace gcl
 {
 	namespace test
 	{
-		namespace event
+		struct event
 		{
 			using gcl_event_t = gcl::event<>;
 
@@ -34,7 +34,7 @@ namespace gcl
 				int c_var = 0;
 			};
 
-			void handler()
+			static void handler()
 			{
 				std::unique_ptr<gcl_event_t::handler> handler(new gcl_event_t::many_to_one_handler
 				{
@@ -52,7 +52,7 @@ namespace gcl
 				handler->on(event_value_holder);
 			}
 
-			void dispatcher()
+			static void dispatcher()
 			{
 				gcl_event_t::dispatcher dispatcher;
 
@@ -85,9 +85,9 @@ namespace gcl
 				dispatcher.dispatch(A_event{ 42 });*/
 			}
 
-			namespace experimental
+			struct experimental
 			{
-				void static_socket()
+				static void static_socket()
 				{
 					struct Event_A {};
 					struct Event_B {};
@@ -108,23 +108,14 @@ namespace gcl
 						myEventHandler.trigger(Event_C{});
 					}
 				}
-			}
+			};
 
-			static bool proceed()
+			static void proceed()
 			{
-				try
-				{
-					// handler();
-					dispatcher();
-					// experimental::static_socket();
-				}
-				catch (const std::exception & ex)
-				{
-					std::cerr << std::endl << "failed : " << ex.what() << std::endl;
-					return false;
-				}
-				return true;
+				handler();
+				dispatcher();
+				experimental::static_socket();
 			}
-		}
+		};
 	}
 }

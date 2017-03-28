@@ -18,6 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{C6284DE2-8
 		GSE\gcl\test\event.hpp = GSE\gcl\test\event.hpp
 		GSE\gcl\test\container\polymorphic_vector.hpp = GSE\gcl\test\container\polymorphic_vector.hpp
 		GSE\gcl\test\test.hpp = GSE\gcl\test\test.hpp
+		GSE\gcl\test\type_info.hpp = GSE\gcl\test\type_info.hpp
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "container", "container", "{B8B735DC-E708-4C3E-A00F-539A12580353}"
