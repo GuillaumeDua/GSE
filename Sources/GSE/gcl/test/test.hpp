@@ -4,6 +4,7 @@
 #include "gcl/test/event.hpp"
 #include "gcl/test/container/polymorphic_vector.hpp"
 #include "gcl/test/type_info.hpp"
+#include "gcl/preprocessor.h"
 
 #include <type_traits>
 #include <iomanip>
@@ -59,7 +60,7 @@ namespace gcl
 		}
 
 		template <template <class...> class pack, class subcomponent_t>
-		static void test_subcomponents/*<pack, subcomponent_t>*/(pack<subcomponent_t>)
+		static void test_subcomponents(pack<subcomponent_t>)
 		{
 			auto subcomponent_name = typeid(subcomponent_t).name();
 			std::cout << " |- : " << std::left << std::setw(indent_style::default_name_w) << subcomponent_name << " : ";
@@ -87,40 +88,41 @@ namespace gcl
 		}
 
 		template <class component_t>
-		struct component_is
+		struct component
 		{
-			template <bool has_pack = type_traits::has_pack<component_t>::value>
+			GCL_PREPROCESSOR__NOT_INSTANTIABLE(component);
+
 			static void test()
+			{
+				auto component_name = typeid(component_t).name();
+
+				std::cout << "[+] : " << std::left << std::setw(indent_style::default_name_w) << component_name << std::endl;
+				component<component_t>::test_impl();
+				std::cout << std::endl;
+			}
+
+		protected:
+			template <bool has_pack = type_traits::has_pack<component_t>::value>
+			static void test_impl()
 			{
 				static_assert(type_traits::has_pack<component_t>::value, "component test pack is mandatory");
 				test_subcomponents(component_t::pack_t{});
 			}
 			template <>
-			static void test<false>()
+			static void test_impl<false>()
 			{
 				std::cout << " |- : [No test pack detected]";
 			}
 		};
 
-		template <typename component_t>
-		static void test_component()
-		{
-			auto component_name = typeid(component_t).name();
-
-			std::cout << "[+] : " << std::left << std::setw(indent_style::default_name_w) << component_name << std::endl;
-
-			component_is<component_t>::test();
-
-			std::cout << std::endl;
-		}
 
 		static void proceed()
 		{
 			// todo : test::type return tunits... (test::type::test1, test::type::test2, etc...)
 			// proceed_one(gcl::test::event::pack_t {});
 			struct toto {};
-			test_component<toto>();
-			test_component<gcl::test::event>();
+			component<toto>::test();
+			component<gcl::test::event>::test();
 
 			// gcl::test::event::experimental::
 
