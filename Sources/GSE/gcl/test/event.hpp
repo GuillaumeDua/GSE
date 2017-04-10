@@ -119,14 +119,8 @@ namespace gcl
 				using pack_t = std::tuple<static_socket>;
 			};
 
-			using pack_t = std::tuple<handler, dispatcher/*, experimental::static_socket*/>;
-
-			static void proceed()
-			{
-				handler();
-				dispatcher();
-				experimental::static_socket();
-			}
+			// using pack_t = std::tuple<handler, dispatcher, experimental::static_socket>;
+			using pack_t = std::tuple<handler, dispatcher, experimental>;
 		};
 	}
 }

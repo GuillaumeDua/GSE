@@ -52,40 +52,7 @@ namespace gcl
 			}
 		}
 
-		template <template <class...> class pack, class subcomponent_t, class ... T>
-		static void test_subcomponents(pack<subcomponent_t, T...>)
-		{
-			test_subcomponents(pack<subcomponent_t>{});
-			test_subcomponents(pack<T...>{});
-		}
-
-		template <template <class...> class pack, class subcomponent_t>
-		static void test_subcomponents(pack<subcomponent_t>)
-		{
-			auto subcomponent_name = typeid(subcomponent_t).name();
-			std::cout << " |- : " << std::left << std::setw(indent_style::default_name_w) << subcomponent_name << " : ";
-			try
-			{
-				//subcomponent_t::proceed();
-				std::cout << "[PASSED]";
-			}
-			catch (const fail_exception & ex)
-			{
-				std::cout << "[FAILED]";
-				std::cout << "    : " << ex.what();
-			}
-			catch (const std::exception & ex)
-			{
-				std::cout << "[CRASHED]";
-				std::cout << "    : " << ex.what();
-			}
-			catch (...)
-			{
-				std::cout << "[CRASHED]";
-				std::cout << "    : FATAL_ERROR";
-			}
-			std::cout << std::endl;
-		}
+		
 
 		template <class component_t>
 		struct component
@@ -102,6 +69,7 @@ namespace gcl
 			}
 
 		protected:
+			// 1 - has test pack ? proceed : skip
 			template <bool has_pack = type_traits::has_pack<component_t>::value>
 			static void test_impl()
 			{
@@ -113,6 +81,58 @@ namespace gcl
 			{
 				std::cout << " |- : [No test pack detected]";
 			}
+			// 2 - foreach test in pack
+			//     has proceed ? do test : "not implemented"
+			//                             or is pack
+			template <template <class...> class pack, class subcomponent_t, class ... T>
+			static void test_subcomponents(pack<subcomponent_t, T...>)
+			{
+				test_subcomponents(pack<subcomponent_t>{});
+				test_subcomponents(pack<T...>{});
+			}
+			template <template <class...> class pack, class subcomponent_t>
+			static void test_subcomponents(pack<subcomponent_t>)
+			{
+				auto subcomponent_name = typeid(subcomponent_t).name();
+				std::cout << " |- : " << std::left << std::setw(indent_style::default_name_w) << subcomponent_name << " : ";
+				try
+				{
+					subcomponent<subcomponent_t>::proceed();
+				}
+				catch (const fail_exception & ex)
+				{
+					std::cout << "[FAILED]";
+					std::cout << "    : " << ex.what();
+				}
+				catch (const std::exception & ex)
+				{
+					std::cout << "[CRASHED]";
+					std::cout << "    : " << ex.what();
+				}
+				catch (...)
+				{
+					std::cout << "[CRASHED]";
+					std::cout << "    : FATAL_ERROR";
+				}
+				std::cout << std::endl;
+			}
+
+			template <typename subcomponent_t>
+			struct subcomponent
+			{
+				template <bool has_proceed = type_traits::has_proceed<subcomponent_t>::value>
+				static void proceed()
+				{
+					auto func = subcomponent_t::proceed;
+					// subcomponent_t::proceed();
+					std::cout << "[PASSED]";
+				}
+				template <>
+				static void proceed<false>()
+				{
+					std::cout << "[NOT_IMPLEMENTED]";
+				}
+			};
 		};
 
 
@@ -123,8 +143,6 @@ namespace gcl
 			struct toto {};
 			component<toto>::test();
 			component<gcl::test::event>::test();
-
-			// gcl::test::event::experimental::
 
 			// todo :
 			// sfinae reflexion check : has_proceed_symbol
