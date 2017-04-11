@@ -1,9 +1,6 @@
 #ifndef GCL_TEST_HPP__
 # define GCL_TEST_HPP__
 
-#include "gcl/test/event.hpp"
-#include "gcl/test/container/polymorphic_vector.hpp"
-#include "gcl/test/type_info.hpp"
 #include "gcl/preprocessor.h"
 
 #include <type_traits>
@@ -35,25 +32,22 @@ namespace gcl
 			struct has_proceed<T, std::void_t<decltype(&T::proceed)>> : std::true_type {};
 		}
 
-		template
-		<
-			class ...tunits,
-			template <typename ... tunits> class pack
-		>
-		static void proceed_one(pack<tunits...> &&)
-		{
-			using test_t = std::function<void()>;
-
-			test_t tunit_list[] = { tunits::proceed ... };
-			for (auto & unit : tunit_list)
-			{
-				std::cout << "[+] " << typeid(decltype(unit)).name() << std::endl;
-				//unit();
-			}
-		}
-
+		//template
+		//<
+		//	class ...tunits,
+		//	template <typename ... tunits> class pack
+		//>
+		//static void proceed_one(pack<tunits...> &&)
+		//{
+		//	using test_t = std::function<void()>;
+		//	test_t tunit_list[] = { tunits::proceed ... };
+		//	for (auto & unit : tunit_list)
+		//	{
+		//		std::cout << "[+] " << typeid(decltype(unit)).name() << std::endl;
+		//		//unit();
+		//	}
+		//}
 		
-
 		template <class component_t>
 		struct component
 		{
@@ -134,29 +128,6 @@ namespace gcl
 				}
 			};
 		};
-
-
-		static void proceed()
-		{
-			// todo : test::type return tunits... (test::type::test1, test::type::test2, etc...)
-			// proceed_one(gcl::test::event::pack_t {});
-			struct toto {};
-			component<toto>::test();
-			component<gcl::test::event>::test();
-
-			// todo :
-			// sfinae reflexion check : has_proceed_symbol
-			// ? do test
-			// : "not implemented" || is itself a pack ?
-
-			// todo :
-			// proceed() may be void() or bool()
-
-			// todo : clean output
-			/*gcl::test::event::proceed();
-			gcl::test::container::proceed();
-			gcl::test::type_info::experimental::proceed();*/
-		}
 	}
 }
 
