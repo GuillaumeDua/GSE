@@ -119,8 +119,10 @@ namespace gcl
 				using pack_t = std::tuple<static_socket>;
 			};
 
+			struct nothing_inside {};
+
 			// using pack_t = std::tuple<handler, dispatcher, experimental::static_socket>;
-			using pack_t = std::tuple<handler, dispatcher, experimental>;
+			using pack_t = std::tuple<handler, dispatcher, experimental, nothing_inside>;
 		};
 	}
 }

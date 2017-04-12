@@ -5,6 +5,7 @@
 
 #include <type_traits>
 #include <iomanip>
+#include <sstream>
 
 // todo : type_trait : test_component<name>::pass / test_component<name>::fail as constexpr booleans value
 
@@ -16,7 +17,37 @@ namespace gcl
 
 		namespace indent_style
 		{
-			static const size_t default_name_w = 40;
+			static const size_t default_name_w = 50;
+
+			template <std::size_t preindent_w>
+			struct log_t
+			{
+				static void print(const char (&token)[4], const std::string & label, const std::string & value = "", std::ostream & os = std::cout)
+				{
+					static const std::size_t preindent_width_v = 3 * preindent_w;
+					static const std::size_t msg_width_v = default_name_w - preindent_width_v;
+
+					// [name_too_long...]
+					std::string label_v;
+					if (label.length() > msg_width_v)
+					{
+						label_v = label.substr(0, msg_width_v - 3);
+						label_v += "...";
+					}
+					else label_v = label;
+
+					os
+						<< std::left
+						<< std::setw(preindent_width_v) << "" << token << " : "
+						<< std::setw(msg_width_v) << label_v << " : "
+						;
+
+					if (value.length() == 0)
+						os.flush();
+					else
+						os << value << std::endl;
+				}
+			};
 		}
 
 		namespace type_traits
@@ -48,21 +79,26 @@ namespace gcl
 		//	}
 		//}
 		
-		template <class component_t>
+		template <class component_t, std::size_t preindent_w = 0>
 		struct component
 		{
 			GCL_PREPROCESSOR__NOT_INSTANTIABLE(component);
+
+			using type = typename component<component_t, preindent_w>;
+			using log_t = typename indent_style::log_t<preindent_w>;
 
 			static void test()
 			{
 				auto component_name = typeid(component_t).name();
 
-				std::cout << "[+] : " << std::left << std::setw(indent_style::default_name_w) << component_name << std::endl;
+				log_t::print("[+]", component_name, " ");
+
 				component<component_t>::test_impl();
 				std::cout << std::endl;
 			}
 
-		protected:
+		// protected: // until VS2015 frienship issue is not fix
+
 			// 1 - has test pack ? proceed : skip
 			template <bool has_pack = type_traits::has_pack<component_t>::value>
 			static void test_impl()
@@ -73,7 +109,7 @@ namespace gcl
 			template <>
 			static void test_impl<false>()
 			{
-				std::cout << " |- : [No test pack detected]";
+				log_t::print(" |-", "[No test pack detected]");
 			}
 			// 2 - foreach test in pack
 			//     has proceed ? do test : "not implemented"
@@ -87,11 +123,29 @@ namespace gcl
 			template <template <class...> class pack, class subcomponent_t>
 			static void test_subcomponents(pack<subcomponent_t>)
 			{
-				auto subcomponent_name = typeid(subcomponent_t).name();
-				std::cout << " |- : " << std::left << std::setw(indent_style::default_name_w) << subcomponent_name << " : ";
+				subcomponent<subcomponent_t, preindent_w>::proceed();
+			}
+		};
+
+		template <typename subcomponent_t, size_t preindent_w = 0>
+		struct subcomponent
+		{
+			using log_t = typename indent_style::log_t<preindent_w>;
+			/*template <bool b>
+			friend void component<subcomponent_t>::test_impl<b>();*/
+
+			template <bool has_proceed = type_traits::has_proceed<subcomponent_t>::value>
+			static void proceed()
+			{
+				std::string subcomponent_name = typeid(subcomponent_t).name();
+				subcomponent_name = subcomponent_name.substr(subcomponent_name.rfind("::") + 2);
+				log_t::print(" |-", subcomponent_name);
+
 				try
 				{
-					subcomponent<subcomponent_t>::proceed();
+					auto func = subcomponent_t::proceed;
+					// subcomponent_t::proceed(); // todo : uncomment
+					std::cout << "[PASSED]";
 				}
 				catch (const fail_exception & ex)
 				{
@@ -110,23 +164,14 @@ namespace gcl
 				}
 				std::cout << std::endl;
 			}
-
-			template <typename subcomponent_t>
-			struct subcomponent
+			template <>
+			static void proceed<false>()
 			{
-				template <bool has_proceed = type_traits::has_proceed<subcomponent_t>::value>
-				static void proceed()
-				{
-					auto func = subcomponent_t::proceed;
-					// subcomponent_t::proceed();
-					std::cout << "[PASSED]";
-				}
-				template <>
-				static void proceed<false>()
-				{
-					std::cout << "[NOT_IMPLEMENTED]";
-				}
-			};
+				std::string subcomponent_name = typeid(subcomponent_t).name();
+				subcomponent_name = subcomponent_name.substr(subcomponent_name.rfind("::") + 2);
+				log_t::print(" |-", subcomponent_name, "[IS_PACK]");
+				component<subcomponent_t, preindent_w + 1>::test_impl();
+			}
 		};
 	}
 }
