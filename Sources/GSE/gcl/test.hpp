@@ -18,13 +18,17 @@ namespace gcl
 		namespace indent_style
 		{
 			static const size_t default_name_w = 50;
+			static const size_t default_margin_w = 3;
+			static const size_t token_w = 4;
 
 			template <std::size_t preindent_w>
 			struct log_t
 			{
-				static void print(const char (&token)[4], const std::string & label, const std::string & value = "", std::ostream & os = std::cout)
+				GCL_PREPROCESSOR__NOT_INSTANTIABLE(log_t);
+
+				static void print(const char (&token)[token_w], const std::string & label, const std::string & value = "", std::ostream & os = std::cout)
 				{
-					static const std::size_t preindent_width_v = 3 * preindent_w;
+					static const std::size_t preindent_width_v = default_margin_w * preindent_w;
 					static const std::size_t msg_width_v = default_name_w - preindent_width_v;
 
 					// [name_too_long...]
@@ -39,7 +43,7 @@ namespace gcl
 					os
 						<< std::left
 						<< std::setw(preindent_width_v) << "" << token << " : "
-						<< std::setw(msg_width_v) << label_v << " : "
+						<< std::setw(msg_width_v) << label_v
 						;
 
 					if (value.length() == 0)
@@ -63,22 +67,6 @@ namespace gcl
 			struct has_proceed<T, std::void_t<decltype(&T::proceed)>> : std::true_type {};
 		}
 
-		//template
-		//<
-		//	class ...tunits,
-		//	template <typename ... tunits> class pack
-		//>
-		//static void proceed_one(pack<tunits...> &&)
-		//{
-		//	using test_t = std::function<void()>;
-		//	test_t tunit_list[] = { tunits::proceed ... };
-		//	for (auto & unit : tunit_list)
-		//	{
-		//		std::cout << "[+] " << typeid(decltype(unit)).name() << std::endl;
-		//		//unit();
-		//	}
-		//}
-		
 		template <class component_t, std::size_t preindent_w = 0>
 		struct component
 		{
@@ -130,6 +118,8 @@ namespace gcl
 		template <typename subcomponent_t, size_t preindent_w = 0>
 		struct subcomponent
 		{
+			GCL_PREPROCESSOR__NOT_INSTANTIABLE(subcomponent);
+
 			using log_t = typename indent_style::log_t<preindent_w>;
 			/*template <bool b>
 			friend void component<subcomponent_t>::test_impl<b>();*/
@@ -169,7 +159,7 @@ namespace gcl
 			{
 				std::string subcomponent_name = typeid(subcomponent_t).name();
 				subcomponent_name = subcomponent_name.substr(subcomponent_name.rfind("::") + 2);
-				log_t::print(" |-", subcomponent_name, "[IS_PACK]");
+				log_t::print(" |-", subcomponent_name, " "); // [IS_PACK]
 				component<subcomponent_t, preindent_w + 1>::test_impl();
 			}
 		};
