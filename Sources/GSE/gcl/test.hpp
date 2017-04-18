@@ -7,13 +7,27 @@
 #include <iomanip>
 #include <sstream>
 
-// todo : type_trait : test_component<name>::pass / test_component<name>::fail as constexpr booleans value
+// todo : static SFINAE tests
+// type_trait : test_component<name>::pass / test_component<name>::fail as constexpr booleans value
 
 namespace gcl
 {
 	namespace test
 	{
 		struct fail_exception : std::exception {};
+
+		// todo : custom exception stack/pack ?
+
+		namespace check
+		{
+			// todo : do_check -> where ? what ?
+			/*template <typename T>
+			static inline void expect(T & val, const T & expected_val)
+			{
+				if (val != expected_val)
+					throw fail_exception("");
+			}*/
+		}
 
 		namespace indent_style
 		{
@@ -43,7 +57,7 @@ namespace gcl
 					os
 						<< std::left
 						<< std::setw(preindent_width_v) << "" << token << " : "
-						<< std::setw(msg_width_v) << label_v
+						<< std::setw(msg_width_v) << label_v << "   "
 						;
 
 					if (value.length() == 0)
@@ -79,7 +93,7 @@ namespace gcl
 			{
 				auto component_name = typeid(component_t).name();
 
-				log_t::print("[+]", component_name, " ");
+				log_t::print("[+]", component_name);
 
 				component<component_t>::test_impl();
 				std::cout << std::endl;
@@ -92,11 +106,13 @@ namespace gcl
 			static void test_impl()
 			{
 				static_assert(type_traits::has_pack<component_t>::value, "component test pack is mandatory");
+				std::cout << std::endl;
 				test_subcomponents(component_t::pack_t{});
 			}
 			template <>
 			static void test_impl<false>()
 			{
+				std::cout << "[SKIP]" << std::endl;
 				log_t::print(" |-", "[No test pack detected]");
 			}
 			// 2 - foreach test in pack
@@ -133,9 +149,15 @@ namespace gcl
 
 				try
 				{
-					auto func = subcomponent_t::proceed;
-					// subcomponent_t::proceed(); // todo : uncomment
+					auto output = do_proceed(subcomponent_t::proceed);
 					std::cout << "[PASSED]";
+
+					if (output.length() != 0)
+					{
+						std::cout << std::endl;
+						indent_style::log_t<preindent_w + 1>::print(" >>", output);
+					}
+
 				}
 				catch (const fail_exception & ex)
 				{
@@ -159,8 +181,24 @@ namespace gcl
 			{
 				std::string subcomponent_name = typeid(subcomponent_t).name();
 				subcomponent_name = subcomponent_name.substr(subcomponent_name.rfind("::") + 2);
-				log_t::print(" |-", subcomponent_name, " "); // [IS_PACK]
+				log_t::print(" |-", subcomponent_name); // [IS_PACK]
 				component<subcomponent_t, preindent_w + 1>::test_impl();
+			}
+
+		protected:
+			template <typename T, typename ... P>
+			static std::string do_proceed(T(*func)(P...))
+			{
+				auto ret = func();
+				std::ostringstream oss;
+				oss << std::left << std::boolalpha << ret;
+				return oss.str();
+			}
+			template <typename ... P>
+			static std::string do_proceed(void(*func)(P...))
+			{
+				func();
+				return std::string{};
 			}
 		};
 	}
