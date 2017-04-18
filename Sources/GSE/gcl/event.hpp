@@ -134,11 +134,6 @@ namespace gcl
 
 			void on(gcl::type_info::id_type event_id, const interface_t & ev) override
 			{
-				for (auto & elem : sockets)
-				{
-					std::cout << elem.first << std::endl;
-				}
-
 				sockets.at(event_id)(ev);
 			}
 			void add_listener(gcl::type_info::id_type event_id, event_callback_t && callback)  override
