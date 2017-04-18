@@ -17,6 +17,8 @@ namespace gcl
 					: a_var(value)
 				{}
 				int a_var = 0;
+
+				static std::size_t counter;
 			};
 			struct B_event : gcl_event_t::interface_t
 			{
@@ -25,6 +27,8 @@ namespace gcl
 					: b_var(value)
 				{}
 				std::string b_var = "default";
+
+				static std::size_t counter;
 			};
 			struct C_event : gcl_event_t::interface_t
 			{
@@ -33,6 +37,8 @@ namespace gcl
 					: c_var(value)
 				{}
 				int c_var = 0;
+
+				static std::size_t counter;
 			};
 
 			struct handler
@@ -48,18 +54,24 @@ namespace gcl
 
 					std::unique_ptr<gcl_event_t::handler> handler(new handler_t
 					{
-						{ gcl::type_info::id<B_event>::value, [](const gcl_event_t::interface_t & ev) { std::cout << "B interface_t catch" << std::endl; } },
-						{ gcl::type_info::id<C_event>::value, [](const gcl_event_t::interface_t & ev) { std::cout << "C interface_t catch" << std::endl; } }
+						{ gcl::type_info::id<B_event>::value, [](const gcl_event_t::interface_t & ev) { B_event::counter++; } },
+						{ gcl::type_info::id<C_event>::value, [](const gcl_event_t::interface_t & ev) { C_event::counter++; } }
 					});
 
-					handler->add_listener<A_event>([](const gcl_event_t::interface_t & ev) { std::cout << "A interface_t catch" << std::endl; });
+					handler->add_listener<A_event>([](const gcl_event_t::interface_t & ev) { A_event::counter++; });
+					if (A_event::counter != 0) throw std::runtime_error("gcl::test::event::handler : bad A_event::counter value");
 					handler->on(A_event{});
+					if (A_event::counter != 1) throw std::runtime_error("gcl::test::event::handler : bad A_event::counter value");
 
 					gcl_event_t::interface_t * ev = new B_event();
+					if (B_event::counter != 0) throw std::runtime_error("gcl::test::event::handler : bad B_event::counter value");
 					handler->on(gcl::type_info::id<B_event>::value, *ev);
+					if (B_event::counter != 1) throw std::runtime_error("gcl::test::event::handler : bad B_event::counter value");
 
 					gcl::type_info::holder<gcl_event_t::interface_t> event_value_holder(new C_event());
+					if (C_event::counter != 0) throw std::runtime_error("gcl::test::event::handler : bad C_event::counter value");
 					handler->on(event_value_holder);
+					if (C_event::counter != 1) throw std::runtime_error("gcl::test::event::handler : bad C_event::counter value");
 				}
 			};
 			struct dispatcher
@@ -133,3 +145,7 @@ namespace gcl
 		};
 	}
 }
+
+std::size_t gcl::test::event::A_event::counter = 0;
+std::size_t gcl::test::event::B_event::counter = 0;
+std::size_t gcl::test::event::C_event::counter = 0;
