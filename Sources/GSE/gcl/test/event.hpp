@@ -1,5 +1,6 @@
 #include "../event.hpp"
 #include <string>
+#include <type_traits>
 
 namespace gcl
 {
@@ -38,7 +39,14 @@ namespace gcl
 			{
 				static void proceed()
 				{
-					std::unique_ptr<gcl_event_t::handler> handler(new gcl_event_t::many_to_one_handler
+					using handler_t = gcl_event_t::select_handler::get
+					<
+						gcl_event_t::select_handler::many,
+						gcl_event_t::select_handler::one
+					>::handler_t;
+					static_assert(std::is_same<handler_t, gcl_event_t::many_to_one_handler>::value, "gcl::test::event::handler::proceed : select_handler fail");
+
+					std::unique_ptr<gcl_event_t::handler> handler(new handler_t
 					{
 						{ gcl::type_info::id<B_event>::value, [](const gcl_event_t::interface_t & ev) { std::cout << "B interface_t catch" << std::endl; } },
 						{ gcl::type_info::id<C_event>::value, [](const gcl_event_t::interface_t & ev) { std::cout << "C interface_t catch" << std::endl; } }
@@ -119,10 +127,9 @@ namespace gcl
 				using pack_t = std::tuple<static_socket>;
 			};
 
-			struct nothing_inside {};
+			struct route {};
 
-			// using pack_t = std::tuple<handler, dispatcher, experimental::static_socket>;
-			using pack_t = std::tuple<handler, dispatcher, experimental, nothing_inside>;
+			using pack_t = std::tuple<handler, dispatcher, experimental, route>;
 		};
 	}
 }

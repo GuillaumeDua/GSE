@@ -176,6 +176,8 @@ namespace gcl
 
 		struct select_handler final
 		{
+			GCL_PREPROCESSOR__NOT_INSTANTIABLE(select_handler);
+
 			enum relation_val_t
 			{
 				one,
