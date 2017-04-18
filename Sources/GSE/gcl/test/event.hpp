@@ -86,12 +86,12 @@ namespace gcl
 					std::shared_ptr<handler_t> handler1(new gcl_event_t::many_to_one_handler());
 					std::shared_ptr<handler_t> handler2(new gcl_event_t::many_to_many_handler());
 
-					std::cout
+					/*std::cout
 						<< gcl::type_info::id<gcl_event_t::interface_t>::value << " => gcl::type_info::id<gcl_event_t::interface_t>::value" << std::endl
 						<< gcl::type_info::id<A_event>::value << " => gcl::type_info::id<A_event>::value" << std::endl
-						;
+						;*/
 
-					handler1->add_listener<A_event>(std::move([](const event_t & ev) { std::cout << "A_event -> handler1 : many_to_one_handler : 1 : " << static_cast<const A_event &>(ev).a_var << std::endl; }));
+					handler1->add_listener<A_event>(std::move([](const event_t & ev) { /*std::cout << "A_event -> handler1 : many_to_one_handler : 1 : " << static_cast<const A_event &>(ev).a_var << std::endl;*/ }));
 					/*handler1->add_listener<A_event>(std::move([](const event_t & ev) { std::cout << "A_event -> handler2 : many_to_many_handler  : 1 : " << static_cast<const A_event &>(ev).a_var << std::endl; }));
 					handler1->add_listener<A_event>(std::move([](const event_t & ev) { std::cout << "A_event -> handler2 : many_to_many_handler  : 2 : " << static_cast<const A_event &>(ev).a_var << std::endl; }));
 					handler1->add_listener<B_event>(std::move([](const event_t & ev) { std::cout << "B_event -> handler2 : many_to_many_handler  : 3 : " << static_cast<const B_event &>(ev).b_var << std::endl; }));*/
@@ -99,7 +99,7 @@ namespace gcl
 					dispatcher.subscribe<A_event>(handler1);
 					//dispatcher.subscribe<A_event>(handler2);
 
-					std::cout << "dispatching A_event :" << std::endl;
+					//std::cout << "dispatching A_event :" << std::endl;
 					dispatcher.dispatch(A_event{ 42 });
 					/*std::cout << "dispatching B_event :" << std::endl;
 					dispatcher.dispatch(B_event{ "Hello, world" });
@@ -122,12 +122,12 @@ namespace gcl
 						{	// event_socket
 							gcl_event_t::experimental::static_socket<Event_A, Event_B, Event_C> myEventHandler;
 
-							myEventHandler.add<Event_A>([]() { std::cout << "A event : first cb" << std::endl; });
-							myEventHandler.add<Event_B>([]() { std::cout << "B event : first cb" << std::endl; });
-							myEventHandler.add<Event_C>([]() { std::cout << "C event : first cb" << std::endl; });
-							myEventHandler.add<Event_A>([]() { std::cout << "A event : another cb" << std::endl; });
-							myEventHandler.add<Event_B>([]() { std::cout << "B event : another cb" << std::endl; });
-							myEventHandler.add<Event_C>([]() { std::cout << "C event : another cb" << std::endl; });
+							myEventHandler.add<Event_A>([]() { /* std::cout << "A event : first cb" << std::endl;	*/	});
+							myEventHandler.add<Event_B>([]() { /* std::cout << "B event : first cb" << std::endl;	*/	});
+							myEventHandler.add<Event_C>([]() { /* std::cout << "C event : first cb" << std::endl;	*/	});
+							myEventHandler.add<Event_A>([]() { /* std::cout << "A event : another cb" << std::endl;	*/	});
+							myEventHandler.add<Event_B>([]() { /* std::cout << "B event : another cb" << std::endl;	*/	});
+							myEventHandler.add<Event_C>([]() { /* std::cout << "C event : another cb" << std::endl;	*/	});
 
 							myEventHandler.trigger<Event_B>();
 							myEventHandler.trigger<0>();
