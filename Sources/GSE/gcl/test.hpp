@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <iomanip>
 #include <sstream>
+#include <functional>
 
 // todo : static SFINAE tests
 // type_trait : test_component<name>::pass / test_component<name>::fail as constexpr booleans value
@@ -14,20 +15,51 @@ namespace gcl
 {
 	namespace test
 	{
-		struct fail_exception : std::exception {};
+		struct fail_exception : std::exception
+		{
+			fail_exception(const std::string & msg)
+				: std::exception(msg.c_str())
+			{}
+			fail_exception(const char* msg)
+				: std::exception(msg)
+			{}
+		};
 
 		// todo : custom exception stack/pack ?
 
-		namespace check
+		struct check
 		{
-			// todo : do_check -> where ? what ?
-			/*template <typename T>
-			static inline void expect(T & val, const T & expected_val)
+			GCL_PREPROCESSOR__NOT_INSTANTIABLE(check);
+
+			template <typename T>
+			static inline void expect(const T & to_test, const std::string & user_msg)
 			{
-				if (val != expected_val)
-					throw fail_exception("");
-			}*/
-		}
+				if (!to_test())
+					throw fail_exception(user_msg);
+			}
+			template <>
+			static inline void expect<bool>(const bool & test_result, const std::string & user_msg)
+			{
+				if (!test_result)
+					throw fail_exception(user_msg);
+			}
+
+			template <typename T>
+			static inline void expect(const std::string & file, const std::size_t line, const std::string & func, const T & to_test, const std::string & user_msg = "")
+			{
+				expect(to_test, get_where(file, line, func) + (user_msg.length() == 0 ? "" : " : ") + user_msg);
+			}
+
+#define GCL_TEST__EXPECT(...) gcl::test::check::expect(__FILE__, __LINE__, __func__, ##__VA_ARGS__)
+
+		private:
+			static inline std::string get_where(const std::string & file, const std::size_t line, const std::string & func)
+			{
+				auto filepos = file.find_last_of("\\/");
+				std::string filename{ filepos == std::string::npos ? file : file.substr(filepos + 1) };
+				return std::string{ "in " + filename + ":" + std::to_string(line) + ", at function \"" + func + "\"" };
+			}
+		};
 
 		namespace indent_style
 		{
