@@ -2,6 +2,8 @@
 #include <string>
 #include <type_traits>
 
+#include "gcl/test.hpp"
+
 namespace gcl
 {
 	namespace test
@@ -59,19 +61,20 @@ namespace gcl
 					});
 
 					handler->add_listener<A_event>([](const gcl_event_t::interface_t & ev) { A_event::counter++; });
-					if (A_event::counter != 0) throw std::runtime_error("gcl::test::event::handler : bad A_event::counter value");
+
+					GCL_TEST__EXPECT(A_event::counter == 0, "gcl::test::event::handler : bad A_event::counter value");
 					handler->on(A_event{});
-					if (A_event::counter != 1) throw std::runtime_error("gcl::test::event::handler : bad A_event::counter value");
+					GCL_TEST__EXPECT(A_event::counter == 1, "gcl::test::event::handler : bad A_event::counter value");
 
 					gcl_event_t::interface_t * ev = new B_event();
-					if (B_event::counter != 0) throw std::runtime_error("gcl::test::event::handler : bad B_event::counter value");
+					GCL_TEST__EXPECT(B_event::counter == 0, "gcl::test::event::handler : bad B_event::counter value");
 					handler->on(gcl::type_info::id<B_event>::value, *ev);
-					if (B_event::counter != 1) throw std::runtime_error("gcl::test::event::handler : bad B_event::counter value");
+					GCL_TEST__EXPECT(B_event::counter == 1, "gcl::test::event::handler : bad B_event::counter value");
 
 					gcl::type_info::holder<gcl_event_t::interface_t> event_value_holder(new C_event());
-					if (C_event::counter != 0) throw std::runtime_error("gcl::test::event::handler : bad C_event::counter value");
+					GCL_TEST__EXPECT(C_event::counter == 0, "gcl::test::event::handler : bad C_event::counter value");
 					handler->on(event_value_holder);
-					if (C_event::counter != 1) throw std::runtime_error("gcl::test::event::handler : bad C_event::counter value");
+					GCL_TEST__EXPECT(C_event::counter == 1, "gcl::test::event::handler : bad C_event::counter value");
 				}
 			};
 			struct dispatcher
@@ -120,18 +123,39 @@ namespace gcl
 						struct Event_C {};
 
 						{	// event_socket
-							gcl_event_t::experimental::static_socket<Event_A, Event_B, Event_C> myEventHandler;
+							gcl_event_t::experimental::static_socket
+							<
+								Event_A,
+								Event_B,
+								Event_C
+							> myEventHandler;
 
-							myEventHandler.add<Event_A>([]() { /* std::cout << "A event : first cb" << std::endl;	*/	});
-							myEventHandler.add<Event_B>([]() { /* std::cout << "B event : first cb" << std::endl;	*/	});
-							myEventHandler.add<Event_C>([]() { /* std::cout << "C event : first cb" << std::endl;	*/	});
-							myEventHandler.add<Event_A>([]() { /* std::cout << "A event : another cb" << std::endl;	*/	});
-							myEventHandler.add<Event_B>([]() { /* std::cout << "B event : another cb" << std::endl;	*/	});
-							myEventHandler.add<Event_C>([]() { /* std::cout << "C event : another cb" << std::endl;	*/	});
+							struct
+							{
+								std::size_t
+									a{ 0 },
+									b{ 0 },
+									c{ 0 };
+							} _cb_call_counters1, _cb_call_counters2;
 
-							myEventHandler.trigger<Event_B>();
-							myEventHandler.trigger<0>();
-							myEventHandler.trigger(Event_C{});
+							myEventHandler.add<Event_A>([&]() { _cb_call_counters1.a++;	});
+							myEventHandler.add<Event_B>([&]() { _cb_call_counters1.b++;	});
+							myEventHandler.add<Event_C>([&]() { _cb_call_counters1.c++;	});
+
+							myEventHandler.add<Event_A>([&]() { _cb_call_counters2.a++;	});
+							myEventHandler.add<Event_B>([&]() { _cb_call_counters2.b++;	});
+							myEventHandler.add<Event_C>([&]() { _cb_call_counters2.c++;	});
+
+							myEventHandler.trigger<0>();		// Event_A by index
+							myEventHandler.trigger<Event_B>();	// Event_B by static type
+							myEventHandler.trigger(Event_C{});	// Event_C by dynamic type
+
+							GCL_TEST__EXPECT(_cb_call_counters1.a == 1, "gcl::test::event::experimental::static_socket : bad A_event counter value");
+							GCL_TEST__EXPECT(_cb_call_counters1.b == 1, "gcl::test::event::experimental::static_socket : bad B_event counter value");
+							GCL_TEST__EXPECT(_cb_call_counters1.c == 1, "gcl::test::event::experimental::static_socket : bad C_event counter value");
+							GCL_TEST__EXPECT(_cb_call_counters2.a == 1, "gcl::test::event::experimental::static_socket : bad A_event counter value");
+							GCL_TEST__EXPECT(_cb_call_counters2.b == 1, "gcl::test::event::experimental::static_socket : bad B_event counter value");
+							GCL_TEST__EXPECT(_cb_call_counters2.c == 1, "gcl::test::event::experimental::static_socket : bad C_event counter value");
 						}
 					}
 				};
