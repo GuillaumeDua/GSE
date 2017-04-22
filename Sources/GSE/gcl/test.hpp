@@ -169,6 +169,7 @@ namespace gcl
 			GCL_PREPROCESSOR__NOT_INSTANTIABLE(subcomponent);
 
 			using log_t = typename indent_style::log_t<preindent_w>;
+			using log_sub_t = typename indent_style::log_t<preindent_w + 1>;
 			/*template <bool b>
 			friend void component<subcomponent_t>::test_impl<b>();*/
 
@@ -187,24 +188,24 @@ namespace gcl
 					if (output.length() != 0)
 					{
 						std::cout << std::endl;
-						indent_style::log_t<preindent_w + 1>::print(" >>", output);
+						log_sub_t::print(" >>", output);
 					}
 
 				}
 				catch (const fail_exception & ex)
 				{
-					std::cout << "[FAILED]";
-					std::cout << "    : " << ex.what();
+					std::cout << "[FAILED]" << std::endl;
+					log_sub_t::print(" >>", ex.what());
 				}
 				catch (const std::exception & ex)
 				{
-					std::cout << "[CRASHED]";
-					std::cout << "    : " << ex.what();
+					std::cout << "[CRASHED]" << std::endl;
+					log_sub_t::print(" >>", ex.what());
 				}
 				catch (...)
 				{
-					std::cout << "[CRASHED]";
-					std::cout << "    : FATAL_ERROR";
+					std::cout << "[CRASHED]" << std::endl;
+					log_sub_t::print(" >>", "FATAL_ERROR");
 				}
 				std::cout << std::endl;
 			}
