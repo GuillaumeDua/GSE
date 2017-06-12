@@ -8,8 +8,6 @@
 
 #include "preprocessor.h"
 
-#include <iostream> // todo::remove
-
 namespace gcl
 {
 	namespace type_info
@@ -30,7 +28,7 @@ namespace gcl
 			}
 
 			template <size_t N>
-			using TypeAt = typename std::tuple_element<N, _Types>::type;
+			using type_at = typename std::tuple_element<N, _Types>::type;
 
 		private:
 			template <typename T_Needle, size_t It, typename T_It, typename ... T_HayStack>
@@ -44,6 +42,8 @@ namespace gcl
 				throw std::out_of_range("tuple::indexOf_impl : Not found");
 			}
 		};
+		template <typename ... Ts>
+		using pack = tuple<Ts...>;
 
 		template <typename T>
 		struct id
