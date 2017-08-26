@@ -13,6 +13,8 @@
 # include <future>
 # include <map>
 
+using namespace std::chrono_literals;
+
 namespace gse
 {
 	template
@@ -80,13 +82,27 @@ namespace gse
 
 		void	run()
 		{
+			using clock_t = std::chrono::steady_clock;
+			using duration_t = std::chrono::duration<long long, std::nano>;
+
+			static const std::size_t fps = 60;
+			static const duration_t frame_delay = duration_t{ 1s } / fps;
+			static auto time = clock_t::now();
+			duration_t elapsed_time;
+
 			is_running = true;
+			
 			while (is_running && !endCondition())
 			{
+				if ((elapsed_time = clock_t::now() - time) < frame_delay)
+					std::this_thread::sleep_for(frame_delay - elapsed_time);
+				time = clock_t::now();
+
 				input();
 				update();
 				draw();
 			}
+			is_running = false;
 		}
 		inline void	stop()
 		{
@@ -102,10 +118,12 @@ namespace gse
 		void update()
 		{
 			// entities behave here
+			std::this_thread::sleep_for(100ms); // simulate costly task
 		}
 		void draw(/*typename draw_t::window_t & window*/)
 		{
 			// entities drawn to window here
+			window->clear();
 			window->display();
 		}
 

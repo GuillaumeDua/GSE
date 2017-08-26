@@ -1,7 +1,7 @@
 #ifndef GSE_ENTITY_HPP__
 # define GSE_ENTITY_HPP__
 
-# include "gcl/container/polymorphic_vector.hpp"
+# include <gcl_cpp/container/polymorphic_vector.hpp>
 
 namespace gse
 {
